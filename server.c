@@ -78,7 +78,7 @@ int main (int argc, char *argv[]) {
             continue;
         }
 
-        if(send(new_fd, "Hello, world", 13, 0) == -1) 
+        if(send(new_fd, "220 srvFtp", 10, 0) == -1) 
             perror("send");
         //else fprintf(stderr, "OKA\n");
 

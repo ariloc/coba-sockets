@@ -11,6 +11,66 @@
 #include <arpa/inet.h>
 
 // ./clFtp [IP] [PORT]
+
+
+
+#define MAXDATASIZE 500 
+//TODO: Pasar al .h
+char buf[MAXDATASIZE];
+int numbytes;
+
+int parse_response_code(char *code){
+    return  100*(code[0]-'0') + 10*(code[1]-'0') + (code[1]-'0');
+}
+
+int login(int sock){
+    char *nombre_usuario, *contraseña;
+    
+    //Recibir solicitud de usuario "username: "
+    printf("username: ");
+    scanf("%s", buf);
+    nombre_usuario = malloc(sizeof(char)*6 + strlen(buf));
+    strcat(strcat(nombre_usuario, "USER "), buf);
+    nombre_usuario[strlen(nombre_usuario)] = '\0';
+    //Enviar nombre de usuario "USER <nombre_usuario>"
+    if(send(sock, nombre_usuario, strlen(nombre_usuario)+1, 0) == -1){
+        perror("send");
+        return -1;
+    }
+    //Recibir solicitud de contraseña "password required for <nombre_usuario> "
+    if((numbytes = recv(sock, buf, MAXDATASIZE, 0)) == -1){
+        perror("recv");
+        return -1;
+    }
+
+    if(parse_response_code(buf) != 331){
+        perror("response code");
+        return -1;
+    }
+
+    printf("password: ");
+    scanf("%s", buf);
+    contraseña = malloc(sizeof(char)*6 + strlen(buf));
+    strcat(strcat(contraseña, "USER "), buf);
+    contraseña[strlen(contraseña)] = '\0';
+
+    //Enviar contraseña "PASS <contraseña>"
+    if(send(sock, contraseña, strlen(contraseña)+1, 0) == -1){
+        perror("send");
+        return -1;
+    }
+
+    //Successful login
+    if(parse_response_code(buf) == 230)
+        return 1;
+    //Login error
+    if(parse_response_code(buf) == 530)
+        return 0;
+    //Unknown error
+    fprintf(stderr, "Login failed, unknown error");
+    return -1;
+}
+
 int main (int argc, char *argv[]) {
     if (argc != 3) {
         fprintf(stderr,"./clFtp [IP] [PORT]\n");
@@ -50,7 +110,22 @@ int main (int argc, char *argv[]) {
         return 2;
     }
 
+
     freeaddrinfo(servinfo);
+
+    
+    if((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1){
+        perror("recv");
+        return 1;
+    }
+    
+    if(parse_response_code(buf) != 220){
+        perror("response code");
+        return 1;
+    }
+    buf[numbytes] = '\0';
+    printf("%s\n",buf);
+    login(sockfd);
 
     /*
     int numbytes;
