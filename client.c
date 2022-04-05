@@ -19,13 +19,13 @@ char buf[MAXDATASIZE];
 int numbytes;
 
 int parse_response_code(char *code){
-    return  100*(code[0]-'0') + 10*(code[1]-'0') + (code[2]-'0');
+    return 100*(code[0]-'0') + 10*(code[1]-'0') + (code[2]-'0');
 }
 
 int login(int sock){
     char *nombre_usuario, *contrasena;
     
-    //olicitud de usuario "username: "
+    //solicitud de usuario "username: "
     printf("username: ");
     memset(buf, 0, sizeof(buf));
     fgets(buf, MAXSTRLEN, stdin);
@@ -52,7 +52,6 @@ int login(int sock){
     }
 
     printf("password: ");
-    memset(buf, 0, sizeof(buf));
     fgets(buf, MAXSTRLEN, stdin);
     contrasena = malloc(sizeof(char)*6 + strlen(buf));
     strcat(strcat(contrasena, "PASS "), buf);
@@ -65,7 +64,6 @@ int login(int sock){
     }
 
     //Recibir respuesta de user:pass
-    memset(buf, 0, sizeof(buf));
     if((numbytes = recv(sock, buf, MAXDATASIZE, 0)) == -1){
         perror("recv");
         return -1;
@@ -73,12 +71,12 @@ int login(int sock){
 
     //Successful login
     if(parse_response_code(buf) == 230){
-        printf("%s", buf);
+        printf("%s\n", buf);
         return 1;
         }
     //Login error
     if(parse_response_code(buf) == 530){
-        printf("%s", buf);
+        printf("%s\n", buf);
         return 0;
         }
     //Unknown error
