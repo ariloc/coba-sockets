@@ -16,33 +16,38 @@
 
 //TODO: Pasar al .h
 char buf[MAXDATASIZE];
-int numbytes;
 
 int parse_response_code(char *code){
     return 100*(code[0]-'0') + 10*(code[1]-'0') + (code[2]-'0');
 }
 
+void read_string_buf() {
+    fgets(buf, MAXSTRLEN, stdin);
+    buf[strcspn(buf, "\r\n")] = '\0';
+}
+
 int login(int sock){
     char *nombre_usuario, *contrasena;
+    int numbytes;
     
     //solicitud de usuario "username: "
     printf("username: ");
-    memset(buf, 0, sizeof(buf));
-    fgets(buf, MAXSTRLEN, stdin);
+    read_string_buf();
     nombre_usuario = malloc(sizeof(char)*6 + strlen(buf));
-    strcat(strcat(nombre_usuario, "USER "), buf);
-    nombre_usuario[strlen(nombre_usuario)] = '\0';
+    strcat(strcpy(nombre_usuario, "USER "), buf);
+    
     //Enviar nombre de usuario "USER <nombre_usuario>"
-    if(send(sock, nombre_usuario, strlen(nombre_usuario)+1, 0) == -1){
+    if(send(sock, nombre_usuario, strlen(nombre_usuario), 0) == -1){
         perror("send");
         return -1;
     }
+
     //Recibir solicitud de contraseña "password required for <nombre_usuario> "
-    memset(buf, 0, sizeof(buf));
-    if((numbytes = recv(sock, buf, MAXDATASIZE, 0)) == -1){
+    if((numbytes = recv(sock, buf, MAXDATASIZE-1, 0)) == -1){
         perror("recv");
         return -1;
     }
+    buf[numbytes] = '\0';
     
     printf("%s\n", buf);
 
@@ -52,33 +57,33 @@ int login(int sock){
     }
 
     printf("password: ");
-    fgets(buf, MAXSTRLEN, stdin);
+    read_string_buf(),
     contrasena = malloc(sizeof(char)*6 + strlen(buf));
-    strcat(strcat(contrasena, "PASS "), buf);
-    contrasena[strlen(contrasena)] = '\0';
+    strcat(strcpy(contrasena, "PASS "), buf);
 
     //Enviar contraseña "PASS <contraseña>"
-    if(send(sock, contrasena, strlen(contrasena)+1, 0) == -1){
+    if(send(sock, contrasena, strlen(contrasena), 0) == -1){
         perror("send");
         return -1;
     }
 
     //Recibir respuesta de user:pass
-    if((numbytes = recv(sock, buf, MAXDATASIZE, 0)) == -1){
+    if((numbytes = recv(sock, buf, MAXDATASIZE-1, 0)) == -1){
         perror("recv");
         return -1;
     }
+    buf[numbytes] = '\0';
 
     //Successful login
     if(parse_response_code(buf) == 230){
         printf("%s\n", buf);
         return 1;
-        }
+    }
     //Login error
     if(parse_response_code(buf) == 530){
         printf("%s\n", buf);
         return 0;
-        }
+    }
     //Unknown error
     fprintf(stderr, "Login failed, unknown error");
     return -1;
@@ -102,7 +107,7 @@ int main (int argc, char *argv[]) {
         return 1;
     }
 
-    int sockfd;
+    int sockfd, numbytes;
     for(p = servinfo; p; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
             perror("client: socket");
