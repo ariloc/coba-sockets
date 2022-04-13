@@ -2,7 +2,7 @@ SRC_DIR := src
 OBJ_DIR := obj
 BIN_DIR := .
 
-EXE := $(BIN_DIR)/srvFtp
+EXE := $(BIN_DIR)/clFtp
 SRC := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(SRC:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
